@@ -1,0 +1,26 @@
+[
+  {
+    "stationId": "station-101",
+    "stationName": "1楼大厅",
+    "areaId": "area-001",
+    "floor": 1
+  },
+  {
+    "stationId": "station-102",
+    "stationName": "2楼会议室",
+    "areaId": "area-001",
+    "floor": 2
+  },
+  {
+    "stationId": "station-201",
+    "stationName": "1楼前台",
+    "areaId": "area-002",
+    "floor": 1
+  },
+  {
+    "stationId": "station-301",
+    "stationName": "3楼办公区",
+    "areaId": "area-003",
+    "floor": 3
+  }
+]

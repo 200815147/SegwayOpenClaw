@@ -1,0 +1,47 @@
+# MEMORY.md - 长期记忆
+
+## Segway 配送环境
+
+### 已知楼宇
+<!-- agent 查询到楼宇信息后在此更新 -->
+<!-- 格式: - 楼宇名称 (areaId: xxx) -->
+
+### 常用站点
+<!-- agent 查询到站点信息后在此更新 -->
+<!-- 格式: - 楼宇名称 > 站点名称 (stationId: xxx) -->
+
+### 已知机器人
+<!-- agent 查询到机器人信息后在此更新 -->
+<!-- 格式: - 机器人昵称 (robotId: xxx, 所属楼宇: xxx) -->
+
+## 用户偏好
+
+- 默认语言: 中文
+- 操作风格: 专业简洁，不需要过多确认
+- 常用操作: <!-- agent 根据使用频率更新 -->
+
+## 经验教训
+
+### API 注意事项
+- Segway API 认证使用 HMAC-SHA256，凭据通过环境变量 SEGWAY_ACCESS_NAME / SEGWAY_ACCESS_KEY 配置
+- 写操作（创建运单、开箱等）是 POST，读操作（查询）是 GET
+- 错误码 9012 = 无可用机器人，建议稍后重试
+- 错误码 9001 = 楼宇不存在，需确认 areaId
+- 错误码 9002 = 运单不存在，需确认 taskId
+
+### Skill 使用提示
+- 如果用户只说了楼宇名称和站点名称，优先用 segway-delivery skill（自动完成全流程）
+- 如果用户提供了具体 ID，可以直接用底层 skill（segway-task-create 等）
+- 所有底层 skill 都支持 --area-name / --station-name / --robot-name 参数，会自动解析为 ID
+- 脚本输出 [TASK_COMPLETE] 表示操作成功，[TASK_FAILED] 表示失败，看到后立即停止
+
+### 写操作安全确认（重要！）
+- 所有写操作（创建运单、取消运单、开箱、关箱、修改优先级、重新配送、取物确认、取件确认）必须两步执行
+- 第一步：加 --dry-run 参数运行，获取操作摘要和 confirm token
+- 第二步：展示摘要给用户，用户确认后加 --confirm <token> 执行
+- 读操作（查询楼宇、站点、机器人、运单状态等）直接执行，不需要确认
+- 输出 [ACTION_PENDING] 表示等待用户确认
+- 涉及的 skill: segway-task-create、segway-task-manage、segway-box-control、segway-delivery
+
+## 近期事件摘要
+<!-- agent 定期从 memory/YYYY-MM-DD.md 提炼到这里 -->

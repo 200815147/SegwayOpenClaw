@@ -1,0 +1,23 @@
+[
+  {
+    "robotId": "robot-001",
+    "robotName": "小蓝1号",
+    "areaId": "area-001",
+    "status": "idle",
+    "battery": 85
+  },
+  {
+    "robotId": "robot-002",
+    "robotName": "小蓝2号",
+    "areaId": "area-001",
+    "status": "busy",
+    "battery": 62
+  },
+  {
+    "robotId": "robot-003",
+    "robotName": "小蓝3号",
+    "areaId": "area-002",
+    "status": "idle",
+    "battery": 93
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "areaId": "area-001",
+    "areaName": "测试楼宇A",
+    "longitude": 116.397,
+    "latitude": 39.908
+  },
+  {
+    "areaId": "area-002",
+    "areaName": "测试楼宇B",
+    "longitude": 116.405,
+    "latitude": 39.915
+  },
+  {
+    "areaId": "area-003",
+    "areaName": "测试楼宇C",
+    "longitude": 116.412,
+    "latitude": 39.922
+  }
+]

@@ -1,0 +1,23 @@
+# USER.md - About Your Human
+
+- **Name:** <!-- 请填写你的名字 -->
+- **What to call them:** <!-- 请填写希望 agent 怎么称呼你 -->
+- **Pronouns:** 
+- **Timezone:** Asia/Shanghai
+- **Notes:** 
+  - 偏好语言：中文
+  - 期望助理风格：Formal，专业简洁
+  - 主要工作：Segway 配送机器人系统开发与集成
+  - 使用 openclaw 管理 Segway 机器人的日常操作
+
+## Segway 使用上下文
+
+- API 凭据已配置在 .env 中（SEGWAY_ACCESS_NAME 和 SEGWAY_ACCESS_KEY）
+- 可用 skill: segway-delivery（一站式配送）、segway-area-map、segway-robot、segway-task-create、segway-task-manage、segway-box-control、segway-webhook
+- Benchmark 项目: segway-bench（评测 AI agent 操作机器人的能力）
+
+## 沟通偏好
+
+- 直接给结果，不需要过多解释
+- 遇到缺少参数时直接问我，不要猜测
+- 中文交流

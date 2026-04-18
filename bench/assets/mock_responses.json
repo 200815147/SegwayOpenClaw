@@ -1,0 +1,61 @@
+{
+  "default": {
+    "/api/transport/task/create": {
+      "code": 200,
+      "data": { "taskId": "mock-task-001" },
+      "message": "success"
+    },
+    "/api/transport/task/cancel": {
+      "code": 200,
+      "data": null,
+      "message": "success"
+    },
+    "/api/transport/task/priority": {
+      "code": 200,
+      "data": null,
+      "message": "success"
+    },
+    "/api/transport/robot/boxs/open": {
+      "code": 200,
+      "data": null,
+      "message": "success"
+    },
+    "/api/transport/robot/boxs/close": {
+      "code": 200,
+      "data": null,
+      "message": "success"
+    },
+    "/api/transport/task/put/verify": {
+      "code": 200,
+      "data": null,
+      "message": "success"
+    },
+    "/api/transport/task/take/verify": {
+      "code": 200,
+      "data": null,
+      "message": "success"
+    },
+    "/api/transport/delay/redeliver": {
+      "code": 200,
+      "data": null,
+      "message": "success"
+    }
+  },
+  "errors": {
+    "no_robot_available": {
+      "code": 9012,
+      "data": null,
+      "message": "无可用机器人"
+    },
+    "invalid_area_id": {
+      "code": 9001,
+      "data": null,
+      "message": "楼宇不存在"
+    },
+    "task_not_found": {
+      "code": 9002,
+      "data": null,
+      "message": "运单不存在"
+    }
+  }
+}
