@@ -12,6 +12,7 @@ import os
 import signal
 import sys
 import time
+import importlib.util
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
@@ -72,6 +73,130 @@ def read_events(task_id=None, limit=20):
     return events[-limit:]
 
 
+# === 任务审批执行逻辑（大模型不参与）===
+
+# stage skill 的任务文件路径
+STAGE_TASKS_FILE = Path(__file__).parent.parent.parent / 'segway-stage' / 'data' / 'pending_tasks.json'
+
+# 导入认证模块路径
+import importlib.util
+_auth_path = Path(__file__).parent.parent.parent / 'segway_auth.py'
+
+
+def _load_segway_auth():
+    """动态加载 segway_auth 模块"""
+    spec = importlib.util.spec_from_file_location('segway_auth', _auth_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _load_staged_tasks():
+    """加载 staged 任务列表"""
+    if not STAGE_TASKS_FILE.exists():
+        return []
+    try:
+        return json.loads(STAGE_TASKS_FILE.read_text())
+    except (json.JSONDecodeError, IOError):
+        return []
+
+
+def _save_staged_tasks(tasks):
+    """保存 staged 任务列表"""
+    STAGE_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STAGE_TASKS_FILE.write_text(json.dumps(tasks, ensure_ascii=False, indent=2))
+
+
+def execute_staged_task(task_id):
+    """
+    批准并执行一个 staged 任务。
+    直接调用 Segway API，大模型完全不参与。
+    """
+    tasks = _load_staged_tasks()
+    task = None
+    for t in tasks:
+        if t['task_id'] == task_id:
+            task = t
+            break
+
+    if not task:
+        return {'code': 404, 'message': f'任务 {task_id} 不存在'}
+
+    if task['status'] != 'pending':
+        return {'code': 409, 'message': f'任务 {task_id} 状态为 {task["status"]}，无法执行'}
+
+    # 执行 API 调用
+    try:
+        auth = _load_segway_auth()
+        method = task['method']
+        api_path = task['api_path']
+        params = task['params']
+
+        result = auth.call_api(method, api_path, body=params)
+
+        # 更新任务状态
+        task['status'] = 'executed'
+        task['executed_at'] = time.time()
+        task['executed_at_str'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        task['api_result'] = result
+        _save_staged_tasks(tasks)
+
+        # 记录到事件日志
+        append_event({
+            'taskId': task_id,
+            'taskStatus': 'approved_and_executed',
+            'statusText': f'审批通过并执行: {task["action_name"]}',
+            'api_result': result,
+        })
+
+        return {
+            'code': 200,
+            'message': f'任务 {task_id} 已批准并执行',
+            'action': task['action_name'],
+            'api_result': result,
+        }
+    except Exception as e:
+        task['status'] = 'error'
+        task['error'] = str(e)
+        _save_staged_tasks(tasks)
+        return {'code': 500, 'message': f'执行失败: {str(e)}'}
+
+
+def reject_staged_task(task_id):
+    """拒绝一个 staged 任务"""
+    tasks = _load_staged_tasks()
+    task = None
+    for t in tasks:
+        if t['task_id'] == task_id:
+            task = t
+            break
+
+    if not task:
+        return {'code': 404, 'message': f'任务 {task_id} 不存在'}
+
+    if task['status'] != 'pending':
+        return {'code': 409, 'message': f'任务 {task_id} 状态为 {task["status"]}，无法拒绝'}
+
+    task['status'] = 'rejected'
+    task['rejected_at'] = time.time()
+    _save_staged_tasks(tasks)
+
+    return {'code': 200, 'message': f'任务 {task_id} 已拒绝', 'action': task['action_name']}
+
+
+def list_pending_tasks():
+    """列出所有 pending 任务"""
+    tasks = _load_staged_tasks()
+    pending = [t for t in tasks if t['status'] == 'pending']
+    return {
+        'code': 200,
+        'count': len(pending),
+        'tasks': [{'task_id': t['task_id'], 'action': t['action_name'],
+                   'params': t['params'], 'created_at': t.get('created_at_str', '')}
+                  for t in pending],
+    }
+
+
 class WebhookHandler(BaseHTTPRequestHandler):
     """处理 Segway 回调请求"""
 
@@ -114,7 +239,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({'code': 200, 'message': 'ok'}).encode())
 
     def do_GET(self):
-        """健康检查"""
+        """健康检查 + 审批端点"""
         if self.path == '/health':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -124,9 +249,28 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 'events_count': len(read_events(limit=999999)),
                 'uptime': time.time() - SERVER_START_TIME if 'SERVER_START_TIME' in globals() else 0,
             }).encode())
+        elif self.path.startswith('/approve/'):
+            task_id = self.path.split('/approve/', 1)[1]
+            result = execute_staged_task(task_id)
+            self._send_json(result)
+        elif self.path.startswith('/reject/'):
+            task_id = self.path.split('/reject/', 1)[1]
+            result = reject_staged_task(task_id)
+            self._send_json(result)
+        elif self.path == '/pending':
+            result = list_pending_tasks()
+            self._send_json(result)
         else:
             self.send_response(404)
             self.end_headers()
+
+    def _send_json(self, data):
+        """发送 JSON 响应"""
+        code = data.get('code', 200)
+        self.send_response(code)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
 
     def log_message(self, format, *args):
         """静默日志，避免刷屏"""

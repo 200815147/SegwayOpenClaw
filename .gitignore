@@ -28,6 +28,9 @@ bench/scripts/results/
 # Webhook 运行时数据
 skills/segway-webhook/data/
 
+# Stage 运行时数据
+skills/segway-stage/data/
+
 # 编辑器
 .vscode/
 .idea/
