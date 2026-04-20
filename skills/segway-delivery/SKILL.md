@@ -1,7 +1,18 @@
 ---
 name: segway-delivery
-description: 一站式配送任务编排。通过楼宇名称和站点名称直接下发配送任务，无需手动查询 ID。支持引领配送（带人去某站点）和取送配送（从A站取件送到B站）。自动完成楼宇查询、站点匹配、运力检查和运单创建的全流程。适用于"送东西到3楼大厅"、"带我去前台"、"从仓库取件送到302"等自然语言指令。
+description: 一站式配送任务编排。通过楼宇名称和站点名称查询楼宇和站点信息，然后通过 segway-stage 起草配送任务等待人工审批。适用于"送东西到3楼大厅"、"带我去前台"、"从仓库取件送到302"等自然语言指令。读操作（status、list-areas）直接执行，写操作（guidance、take-deliver）必须通过 segway-stage 起草。
 ---
+
+# Segway 一站式配送
+
+通过楼宇名称和站点名称查询信息，然后起草配送任务等待审批。
+
+⚠️ **写操作（guidance、take-deliver）的正确流程：**
+1. 用本 skill 的 `list-areas` 或 `status` 查询楼宇/站点信息
+2. 用 `segway-stage` skill 起草任务：`stage_action.py stage --action task.create.guidance --params '...'`
+3. 告知用户任务已起草，等待审批
+
+读操作（status、list-areas）可以直接使用本 skill。
 
 # Segway 一站式配送
 

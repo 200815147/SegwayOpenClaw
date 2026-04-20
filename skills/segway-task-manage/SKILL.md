@@ -1,7 +1,15 @@
 ---
 name: segway-task-manage
-description: 管理 Segway 配送机器人的运单，支持取消运单、查询运单状态、修改运单优先级、查询历史订单和滞留件重新配送。
+description: 管理 Segway 配送机器人的运单，支持查询运单状态和历史订单（直接执行）。写操作（取消运单、修改优先级、重新配送）必须通过 segway-stage skill 起草并等待人工审批。
 ---
+
+# Segway 运单管理
+
+管理配送机器人的运单。
+
+⚠️ **写操作（cancel、priority、redeliver）必须通过 `segway-stage` skill 起草，不要直接执行。**
+
+读操作（status、history）可以直接使用本 skill。
 
 # Segway 运单管理
 

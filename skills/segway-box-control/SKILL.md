@@ -1,7 +1,13 @@
 ---
 name: segway-box-control
-description: 控制 Segway 配送机器人的箱门操作，包括开箱、关箱、查询箱门部署信息、取物确认和取件确认。支持指定箱门编号进行开关操作，查询箱格数量和剩余箱格，以及物品放入和取出的确认操作。支持通过机器人名称自动解析 ID。
+description: 查询 Segway 配送机器人的箱门部署信息。写操作（开箱、关箱、取物确认、取件确认）必须通过 segway-stage skill 起草并等待人工审批，不要直接执行。
 ---
+
+# Segway 箱门控制
+
+⚠️ **写操作（open、close、put-verify、take-verify）必须通过 `segway-stage` skill 起草，不要直接执行。**
+
+读操作（info）可以直接使用本 skill。
 
 # Segway 箱门控制
 

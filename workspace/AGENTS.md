@@ -217,21 +217,22 @@ This is a starting point. Add your own conventions, style, and rules as you figu
 
 ### ⚠️ 写操作安全规则（必须遵守）
 
-所有 Segway 写操作（创建运单、取消运单、开箱、关箱、修改优先级、重新配送、取物确认、取件确认）都有硬编码的两步确认机制：
+所有 Segway 写操作（创建运单、取消运单、开箱、关箱、修改优先级、重新配送、取物确认、取件确认）**必须通过 `segway-stage` skill 起草**，不允许直接执行。
 
-1. **第一步（dry-run）**：加 `--dry-run` 参数运行脚本，脚本验证参数后输出操作摘要和确认 token
-2. **展示给用户**：将操作摘要告诉用户，等待用户明确说"确认"、"好的"、"执行"等
-3. **第二步（confirm）**：用户确认后，用完全相同的参数加 `--confirm <token>` 再次运行
+正确流程：
+1. 查询所需信息（楼宇 ID、站点 ID 等）— 用 segway-area-map 或 segway-robot
+2. 构造好参数后，调用 `segway-stage` 的 `stage` 命令起草任务
+3. 输出 `[ACTION_STAGED]` 后告知用户"任务已起草，等待审批"
+4. 结束。不要等待，不要轮询，不要再调用任何 skill
 
-**关键约束：**
-- 不加 `--dry-run` 也不加 `--confirm` 直接运行写操作 → 脚本会拒绝执行
-- 编造或猜测 token → 签名验证失败，脚本拒绝执行
-- token 有效期 5 分钟，过期需要重新 dry-run
-- 读操作（查询楼宇、站点、机器人状态、运单状态等）不需要确认，直接执行
+**禁止行为：**
+- 禁止直接调用 segway-task-create、segway-task-manage、segway-box-control、segway-delivery 的写操作命令
+- 禁止使用 --dry-run / --confirm 流程（已废弃，仅 benchmark 使用）
+- 禁止在用户未明确要求时自行起草写操作任务
 
 **输出标记含义：**
-- `[ACTION_PENDING]` → 操作等待用户确认，展示摘要后等用户回复
-- `[TASK_COMPLETE]` → 操作已完成，告知用户结果
+- `[ACTION_STAGED]` → 任务已起草等待审批，告知用户后结束
+- `[TASK_COMPLETE]` → 读操作已完成，告知用户结果
 - `[TASK_FAILED]` → 操作失败，告知用户错误信息，不要重试
 
 ### 什么时候写记忆

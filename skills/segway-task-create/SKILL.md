@@ -1,11 +1,19 @@
 ---
 name: segway-task-create
-description: 下发 Segway 配送机器人运单，支持创建引领任务、特殊引领任务和取送配送任务。可指定目标站点、机器人、优先级等参数来创建任务。支持通过楼宇名称、站点名称、机器人名称自动解析 ID，无需手动查询。
+description: 下发 Segway 配送机器人运单，支持创建引领任务、特殊引领任务和取送配送任务。可指定目标站点、机器人、优先级等参数来创建任务。支持通过楼宇名称、站点名称、机器人名称自动解析 ID，无需手动查询。注意：所有写操作必须通过 segway-stage skill 起草并等待人工审批，不要直接执行本 skill 的写操作命令。
 ---
 
 # Segway 运单创建
 
-下发配送机器人运单，支持引领运单和取送运单的创建。所有 ID 参数均支持通过名称自动解析。
+⚠️ **重要：不要直接使用本 skill 创建运单。请使用 `segway-stage` skill 起草任务并等待人工审批。**
+
+如果你需要创建运单，正确的做法是：
+```bash
+# 使用 segway-stage 起草任务
+stage_action.py stage --action task.create.guidance --params '{"areaId":"xxx","taskType":"Guidance","stationId":"xxx"}'
+```
+
+本 skill 的直接执行命令仅供 benchmark 测试使用，日常操作禁止直接调用。
 
 ## 完成判断规则
 - 当脚本输出包含 `[TASK_COMPLETE]` 时，表示运单已创建成功，将运单 ID 告知用户即可，不要再调用任何 skill。

@@ -36,12 +36,13 @@
 - 脚本输出 [TASK_COMPLETE] 表示操作成功，[TASK_FAILED] 表示失败，看到后立即停止
 
 ### 写操作安全确认（重要！）
-- 所有写操作（创建运单、取消运单、开箱、关箱、修改优先级、重新配送、取物确认、取件确认）必须两步执行
-- 第一步：加 --dry-run 参数运行，获取操作摘要和 confirm token
-- 第二步：展示摘要给用户，用户确认后加 --confirm <token> 执行
-- 读操作（查询楼宇、站点、机器人、运单状态等）直接执行，不需要确认
-- 输出 [ACTION_PENDING] 表示等待用户确认
-- 涉及的 skill: segway-task-create、segway-task-manage、segway-box-control、segway-delivery
+- 所有写操作必须通过 `segway-stage` skill 起草，不允许直接执行
+- 正确流程：查询信息 → 调用 stage_action.py stage → 告知用户等待审批 → 结束
+- 用户通过审批链接（http://IP:18800/approve/task_xxx）批准后，webhook server 直接执行 API
+- 大模型不参与执行过程
+- 读操作（查询楼宇、站点、机器人、运单状态等）直接执行，不需要起草
+- 输出 [ACTION_STAGED] 表示任务已起草等待审批
+- 禁止直接调用 segway-task-create、segway-task-manage、segway-box-control、segway-delivery 的写操作命令
 
 ## 近期事件摘要
 <!-- agent 定期从 memory/YYYY-MM-DD.md 提炼到这里 -->
