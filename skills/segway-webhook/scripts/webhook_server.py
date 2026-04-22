@@ -91,6 +91,36 @@ def _load_segway_auth():
     return mod
 
 
+def _notify_agent(message):
+    """
+    通过 openclaw gateway API 通知 agent。
+    agent 收到消息后可以转告用户。
+    """
+    import urllib.request
+    gateway_port = int(os.environ.get('OPENCLAW_GATEWAY_PORT', '18789'))
+    gateway_token = os.environ.get('OPENCLAW_GATEWAY_TOKEN', 'ffc59225d65daf0bd0c639fde9642485fe6d1af38024925f')
+
+    url = f'http://127.0.0.1:{gateway_port}/api/v1/agents/main/message'
+    payload = json.dumps({'message': message}).encode()
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {gateway_token}',
+        },
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return resp.status == 200
+    except Exception as e:
+        # 通知失败不阻断主流程，只记日志
+        with open(LOG_FILE, 'a', encoding='utf-8') as f:
+            f.write(f'[{datetime.now().isoformat()}] 通知 agent 失败: {e}\n')
+        return False
+
+
 def _load_staged_tasks():
     """加载 staged 任务列表"""
     if not STAGE_TASKS_FILE.exists():
@@ -149,6 +179,14 @@ def execute_staged_task(task_id):
             'api_result': result,
         })
 
+        # 通知 agent
+        api_code = result.get('code', result.get('resultCode', '?')) if result else '?'
+        if api_code in (200, '200'):
+            _notify_agent(f'✅ 任务 {task_id}（{task["action_name"]}）已批准并执行成功。API 返回: {json.dumps(result.get("data", {}), ensure_ascii=False)[:200]}')
+        else:
+            api_msg = result.get('message', '未知') if result else '无响应'
+            _notify_agent(f'⚠️ 任务 {task_id}（{task["action_name"]}）已批准但 API 返回错误: {api_code} - {api_msg}')
+
         return {
             'code': 200,
             'message': f'任务 {task_id} 已批准并执行',
@@ -159,6 +197,7 @@ def execute_staged_task(task_id):
         task['status'] = 'error'
         task['error'] = str(e)
         _save_staged_tasks(tasks)
+        _notify_agent(f'⚠️ 任务 {task_id}（{task["action_name"]}）执行出错: {str(e)}')
         return {'code': 500, 'message': f'执行失败: {str(e)}'}
 
 
@@ -180,6 +219,9 @@ def reject_staged_task(task_id):
     task['status'] = 'rejected'
     task['rejected_at'] = time.time()
     _save_staged_tasks(tasks)
+
+    # 通知 agent
+    _notify_agent(f'❌ 任务 {task_id}（{task["action_name"]}）已被用户拒绝。')
 
     return {'code': 200, 'message': f'任务 {task_id} 已拒绝', 'action': task['action_name']}
 
